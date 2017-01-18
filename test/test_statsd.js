@@ -10,8 +10,8 @@ var dgram = require('dgram'),
  */
 function udpTest(test, callback){
   var server = dgram.createSocket("udp4");
-  server.on('message', function(message){
-    test(message.toString(), server);
+  server.on('message', function(message, rinfo){
+    test(message.toString(), server, rinfo);
   });
 
   server.on('listening', function(){
@@ -749,6 +749,73 @@ describe('StatsD', function(){
 
         timestamp = new Date();
         statsd.increment('a', 1);
+      });
+    });
+  });
+  describe('socketRefresh', function(){
+    it('should reuse the same socket when sending multiple messages quickly', function(finished){
+
+      var numMessagesReceived = 0;
+      var firstRinfo = null;
+
+      udpTest(function(message, server, rInfo){
+        numMessagesReceived++;
+        assert.equal(message, 'test:1|c');
+
+        if (numMessagesReceived === 1) {
+          firstRinfo = rInfo;
+        } else {
+          assert.equal(numMessagesReceived, 2);
+          assert.equal(firstRinfo.port, rInfo.port);
+          server.close();
+          finished();
+        }
+      }, function(server) {
+        var address = server.address();
+        var options = {
+          host: address.host,
+          port: address.port,
+          maxBufferSize: 0
+        };
+        var statsd = new StatsD(options);
+
+        statsd.increment('test');
+        statsd.increment('test');
+      });
+    });
+
+    it('should use a new socket after the specified interval', function(finished){
+
+      var numMessagesReceived = 0;
+      var firstRinfo = null;
+
+      udpTest(function(message, server, rInfo){
+        numMessagesReceived++;
+        assert.equal(message, 'test:1|c');
+
+        if (numMessagesReceived === 1) {
+          firstRinfo = rInfo;
+        } else {
+          assert.equal(numMessagesReceived, 2);
+          assert.notEqual(firstRinfo.port, rInfo.port);
+          server.close();
+          finished();
+        }
+      }, function(server) {
+        var address = server.address();
+        var options = {
+          host: address.host,
+          port: address.port,
+          maxBufferSize: 0,
+          socketRefreshInterval: 1 // 1ms
+        };
+        var statsd = new StatsD(options);
+
+        statsd.increment('test');
+        // Send a second metric after a delay (10ms)
+        setTimeout(function() {
+          statsd.increment('test');
+        }, 10);
       });
     });
   });
