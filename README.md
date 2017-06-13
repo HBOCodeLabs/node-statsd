@@ -91,13 +91,22 @@ If an array is specified as the `name` parameter each item in that array will be
 
 ## Errors
 
-In the event that there is a socket error, `node-statsd` will allow this error to bubble up.  If you would like to catch the errors, just attach a listener to the socket property on the instance.
+Original from sivy/node-statsd:
+
+> In the event that there is a socket error, `node-statsd` will allow this error to bubble up.  If you would like to catch the errors, just attach a listener to the socket property on the instance.
 
 ```javascript
 client.socket.on('error', function(error) {
   return console.error("Error in socket: ", error);
 });
 ```
+
+HBO/k8s specific:
+
+Because we recreate the socket every minute, we cannot rely on the caller to do error handling, because they are not exposed to the newly created sockets.
+
+Instead an error handler should be passed down in options, and will be attached to every socket created.
+
 
 If you want to catch errors in sending a message then use the callback provided.
 
