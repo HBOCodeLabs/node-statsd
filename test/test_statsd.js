@@ -821,7 +821,7 @@ describe('StatsD', function(){
     });
 
     describe('refreshDns', function(){
-        it('should use 127.0.0.1 when dns fails', function(done){
+        it('should use orignal host when dns fails', function(done){
             var dgram = require('dgram'),
             mockDgramSocket,
             server,
@@ -829,7 +829,7 @@ describe('StatsD', function(){
 
             mockDgramSocket = {
                 send: function(buffer, offset, length, port, address, callback) {
-                    assert.equal(address, '127.0.0.1');
+                    assert.equal(address, 'badAddress');
                     done();
                 }
             };
