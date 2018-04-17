@@ -468,6 +468,19 @@ describe('StatsD', function(){
       });
     });
 
+    it('should send count by 0 when 0 is specified', function(finished){
+      udpTest(function(message, server){
+        assert.equal(message, 'test:0|c');
+        server.close();
+        finished();
+      }, function(server){
+        var address = server.address(),
+            statsd = new StatsD(address.address, address.port);
+
+        statsd.increment('test', 0);
+      });
+    });
+
     it('should send proper count format with tags', function(finished){
       udpTest(function(message, server){
         assert.equal(message, 'test:42|c|#foo,bar');
@@ -540,6 +553,19 @@ describe('StatsD', function(){
             statsd = new StatsD(address.address, address.port);
 
         statsd.decrement('test');
+      });
+    });
+
+    it('should send count by 0 when 0 is specified', function(finished){
+      udpTest(function(message, server){
+        assert.equal(message, 'test:0|c');
+        server.close();
+        finished();
+      }, function(server){
+        var address = server.address(),
+            statsd = new StatsD(address.address, address.port);
+
+        statsd.decrement('test', 0);
       });
     });
 
